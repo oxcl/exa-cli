@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
+import { exaError, EXIT_AUTH } from "./error";
 
 export interface Config {
   apiKey: string;
@@ -25,9 +26,7 @@ export function loadConfig(): Config | null {
 export function getApiKey(): string {
   const config = loadConfig();
   if (!config?.apiKey) {
-    throw new Error(
-      "No API key found. Run 'exa auth' to set one up."
-    );
+    exaError("No API key found. Run 'exa auth' to set one up.", EXIT_AUTH);
   }
   return config.apiKey;
 }

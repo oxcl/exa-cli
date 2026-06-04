@@ -5,6 +5,7 @@ import { searchCommand } from "./commands/search";
 import { fetchCommand } from "./commands/fetch";
 import { readFileSync } from "fs";
 import { resolve } from "path";
+import { setupSigintHandler } from "./error";
 
 const pkg = JSON.parse(
   readFileSync(resolve(import.meta.dir, "../package.json"), "utf-8")
@@ -23,4 +24,5 @@ const main = defineCommand({
   },
 });
 
+setupSigintHandler();
 runMain(main);
