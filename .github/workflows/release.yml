@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   release:
@@ -21,10 +22,10 @@ jobs:
           - os: ubuntu-latest
             target: bun-linux-arm64
             binary: exa-linux-arm64
-          - os: macos-13
+          - os: ubuntu-latest
             target: bun-darwin-x64
             binary: exa-darwin-x64
-          - os: macos-latest
+          - os: ubuntu-latest
             target: bun-darwin-arm64
             binary: exa-darwin-arm64
           - os: windows-latest
@@ -63,6 +64,26 @@ jobs:
         with:
           path: artifacts
           merge-multiple: true
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+          # Needed for npm provenance / trusted publishing
+          # See: https://docs.npmjs.com/generating-provenance-statements
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Publish to npm
+        run: npm publish --access public --provenance
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
