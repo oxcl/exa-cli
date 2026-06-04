@@ -1,7 +1,7 @@
 import { defineCommand } from "citty";
 import { z } from "zod";
 import { getApiKey } from "../config";
-import { exaError, EXIT_API, EXIT_ERROR } from "../error";
+import { exaError, disableColors, EXIT_API, EXIT_ERROR } from "../error";
 import { readStdinLines } from "../stdin";
 
 const searchOptionsSchema = z.object({
@@ -28,6 +28,7 @@ const searchOptionsSchema = z.object({
 type ExaResult = {
   title?: string;
   url: string;
+  score?: number;
   publishedDate?: string;
   author?: string;
   text?: string;
@@ -189,6 +190,33 @@ function formatMarkdown(data: ExaResponse, query: string, type?: string): string
   return lines.join("\n");
 }
 
+function formatLlm(data: ExaResponse): string {
+  const lines: string[] = [];
+
+  for (const result of data.results) {
+    lines.push(`[${result.title ?? "Untitled"}](${result.url})`);
+
+    const meta: string[] = [];
+    if (result.score !== undefined) meta.push(`score=${result.score}`);
+    if (result.publishedDate) {
+      meta.push(`published=${result.publishedDate.split("T")[0]}`);
+    }
+    if (result.author) meta.push(`author=${result.author}`);
+    if (meta.length > 0) {
+      lines.push(meta.join(" "));
+    }
+
+    const content = result.highlights?.join("\n") ?? result.text ?? result.summary;
+    if (content) {
+      lines.push(content);
+    }
+
+    lines.push("");
+  }
+
+  return lines.join("\n").trimEnd();
+}
+
 export const searchCommand = defineCommand({
   meta: {
     name: "search",
@@ -293,13 +321,9 @@ export const searchCommand = defineCommand({
     const format = opts.format ?? "markdown";
 
     if (format === "llm") {
-      exaError(
-        "Format 'llm' is not yet implemented. Use 'json' or 'markdown'.",
-        EXIT_ERROR
-      );
-    }
-
-    if (format === "json") {
+      disableColors();
+      console.log(formatLlm(data));
+    } else if (format === "json") {
       if (data.results.length === 0) {
         console.log("[]");
       } else {

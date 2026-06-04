@@ -1,7 +1,7 @@
 import { defineCommand } from "citty";
 import { z } from "zod";
 import { getApiKey } from "../config";
-import { exaError, exaWarning, EXIT_API, EXIT_ERROR } from "../error";
+import { exaError, exaWarning, disableColors, EXIT_API, EXIT_ERROR } from "../error";
 import { readStdinLines } from "../stdin";
 
 const fetchOptionsSchema = z.object({
@@ -157,6 +157,32 @@ function formatMarkdown(data: ExaContentsResponse): string {
   return lines.join("\n");
 }
 
+function formatLlm(data: ExaContentsResponse): string {
+  const lines: string[] = [];
+
+  for (const result of data.results) {
+    lines.push(`[${result.title ?? "Untitled"}](${result.url})`);
+
+    const meta: string[] = [];
+    if (result.publishedDate) {
+      meta.push(`published=${result.publishedDate.split("T")[0]}`);
+    }
+    if (result.author) meta.push(`author=${result.author}`);
+    if (meta.length > 0) {
+      lines.push(meta.join(" "));
+    }
+
+    const content = result.text ?? result.highlights?.join("\n") ?? result.summary;
+    if (content) {
+      lines.push(content);
+    }
+
+    lines.push("");
+  }
+
+  return lines.join("\n").trimEnd();
+}
+
 function warnAboutFailures(statuses: ExaStatus[]): boolean {
   let allFailed = true;
 
@@ -272,13 +298,9 @@ export const fetchCommand = defineCommand({
     const format = opts.format ?? "markdown";
 
     if (format === "llm") {
-      exaError(
-        "Format 'llm' is not yet implemented. Use 'json' or 'markdown'.",
-        EXIT_ERROR
-      );
-    }
-
-    if (format === "json") {
+      disableColors();
+      console.log(formatLlm(data));
+    } else if (format === "json") {
       if (data.results.length === 0) {
         console.log("[]");
       } else {
