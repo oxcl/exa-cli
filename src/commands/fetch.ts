@@ -2,6 +2,7 @@ import { defineCommand } from "citty";
 import { z } from "zod";
 import { getApiKey } from "../config";
 import { exaError, exaWarning, EXIT_API, EXIT_ERROR } from "../error";
+import { readStdinLines } from "../stdin";
 
 const fetchOptionsSchema = z.object({
   urls: z.array(z.string()).optional(),
@@ -223,7 +224,11 @@ export const fetchCommand = defineCommand({
     },
   },
   async run({ args, rawArgs }) {
-    const urls = extractPositionalUrls(rawArgs);
+    let urls = extractPositionalUrls(rawArgs);
+
+    if (urls.length === 0) {
+      urls = await readStdinLines();
+    }
 
     const parsed = fetchOptionsSchema.safeParse({
       ...args,
@@ -246,7 +251,10 @@ export const fetchCommand = defineCommand({
     const opts = parsed.data;
 
     if (urls.length === 0) {
-      exaError("Missing required argument: at least one URL", EXIT_ERROR);
+      exaError(
+        "No URLs provided. Pass URLs as arguments or pipe them to stdin.",
+        EXIT_ERROR
+      );
     }
 
     const apiKey = getApiKey();

@@ -2,6 +2,7 @@ import { defineCommand } from "citty";
 import { z } from "zod";
 import { getApiKey } from "../config";
 import { exaError, EXIT_API, EXIT_ERROR } from "../error";
+import { readStdinLines } from "../stdin";
 
 const searchOptionsSchema = z.object({
   query: z.string().optional(),
@@ -272,7 +273,14 @@ export const searchCommand = defineCommand({
     }
 
     const opts = parsed.data;
-    const query = args.query ?? opts.q;
+    let query = args.query ?? opts.q;
+
+    if (!query) {
+      const lines = await readStdinLines();
+      if (lines.length > 0) {
+        query = lines[0];
+      }
+    }
 
     if (!query) {
       exaError("Missing required argument 'query'", EXIT_ERROR);
