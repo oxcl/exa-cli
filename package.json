@@ -3,9 +3,11 @@
   "version": "0.3.0",
   "module": "index.ts",
   "type": "module",
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
   "bin": {
-    "exa": "./src/index.ts"
+    "exa": "src/index.ts"
   },
   "scripts": {
     "build": "bun build src/index.ts --compile --outfile exa",
