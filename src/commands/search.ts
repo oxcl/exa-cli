@@ -300,7 +300,11 @@ export const searchCommand = defineCommand({
     }
 
     if (format === "json") {
-      console.log(JSON.stringify(data, null, 2));
+      if (data.results.length === 0) {
+        console.log("[]");
+      } else {
+        console.log(JSON.stringify(data, null, 2));
+      }
     } else {
       console.log(formatMarkdown(data, query!, opts.type));
     }
